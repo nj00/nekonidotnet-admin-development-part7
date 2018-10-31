@@ -11,6 +11,8 @@ open Shared
 open Fable.Remoting.Server
 open Fable.Remoting.Giraffe
 
+// Dapperの初期化。null←→option の変換設定
+DataAccess.addOptionHandlers()
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
 
@@ -32,6 +34,7 @@ let app = application {
     memory_cache
     use_static publicPath
     use_gzip
+    app_config DbInit.Initialize
 }
 
 run app
