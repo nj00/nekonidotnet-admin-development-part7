@@ -18,7 +18,7 @@ type Taxonomy = {
     /// <summary>
     /// id
     /// </summary>
-    Id : int;
+    Id : int64;
 
     /// <summary>
     /// 分類タイプ

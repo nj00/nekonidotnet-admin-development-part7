@@ -42,6 +42,11 @@ let menu currentPage =
                   menuItem "Counter" Page.Counter currentPage
                   menuItem "Janken" Page.Janken currentPage
               ]
+          Menu.label [ ] [ str "Maintenance" ]
+          Menu.list [ ]
+              [ 
+                  menuItem "Taxonomies" Page.Taxonomies currentPage
+              ]
         ]
 
 let view (model : Model) (dispatch : Msg -> unit) =
@@ -50,6 +55,7 @@ let view (model : Model) (dispatch : Msg -> unit) =
         | HomeModel m -> Home.View.root m (HomeMsg >> dispatch)
         | CounterModel m -> Counter.View.root m (CounterMsg >> dispatch)
         | JankenModel m -> Janken.View.root m (JankenMsg >> dispatch)
+        | TaxonomiesModel m -> Taxonomies.View.root m (TaxonomiesMsg >> dispatch)        
 
     div [ ]
         [ navBrand

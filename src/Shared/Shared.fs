@@ -36,7 +36,7 @@ module Taxonomies =
 
     type ITaxonomyApi = {
         getTaxonomies : GetTaxonomiesParam -> Async<GetTaxonomiesResult>
-        getTaxonomy : int -> Async<Taxonomy option>
+        getTaxonomy : int64 -> Async<Taxonomy option>
         addNewTaxonomy : Taxonomy -> Async<int>
         updateTaxonomy : Taxonomy -> Async<int>
         removeTaxonomy : Taxonomy -> Async<int>

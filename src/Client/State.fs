@@ -25,12 +25,16 @@ let urlUpdate (result: Page option) (model: App.Types.Model) =
     | Some Page.Janken ->
         let m, cmd = Janken.State.init()
         { model with PageModel = JankenModel m }, Cmd.map JankenMsg cmd
+    | Some Page.Taxonomies ->
+        let m, cmd = Taxonomies.State.init()
+        { model with PageModel = TaxonomiesModel m }, Cmd.map TaxonomiesMsg cmd
 
 let init result =
     let (home, _) = Home.State.init()
     let (model, cmd) =
       urlUpdate result
-        {  PageModel = HomeModel home   }
+        { Note = ""
+          PageModel = HomeModel home   }
     model, cmd
 
 let update msg model =
@@ -51,5 +55,21 @@ let update msg model =
         let (model', cmd) = Janken.State.update msg m
         { model with PageModel = JankenModel model' }, Cmd.map JankenMsg cmd
     | JankenMsg _, _ ->
+        model, Cmd.none
+
+    | TaxonomiesMsg msg, TaxonomiesModel m ->
+        match msg with
+        | Taxonomies.Types.Msg.ApiError exn -> 
+            match exn with
+            | :? ProxyRequestException as ex -> 
+                match ex.StatusCode with
+                | _ -> 
+                    { model with Note = ex.Message } , Cmd.none
+            | _ ->
+                { model with Note = exn.Message } , Cmd.none
+        | _ ->
+            let (model', cmd) = Taxonomies.State.update msg m
+            { model with PageModel = TaxonomiesModel model' }, Cmd.map TaxonomiesMsg cmd
+    | TaxonomiesMsg _, _ ->
         model, Cmd.none
     

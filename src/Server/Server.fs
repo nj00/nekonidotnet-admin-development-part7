@@ -13,20 +13,16 @@ open Fable.Remoting.Giraffe
 
 // Dapperの初期化。null←→option の変換設定
 DataAccess.addOptionHandlers()
+// Sqliteの型変換設定
+Repository.SqliteTypeHandler.addTypeHandlers()
+
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
 
-let getInitCounter() : Task<Counter> = task { return 42 }
-
-let counterApi = {
-    initialCounter = getInitCounter >> Async.AwaitTask
+let webApp = router {
+    forward "/api/ICounterApi" Services.Counter.apiRoute
+    forward "/api/ITaxonomyApi" Services.Taxonomies.apiRoute
 }
-
-let webApp =
-    Remoting.createApi()
-    |> Remoting.withRouteBuilder Route.builder
-    |> Remoting.fromValue counterApi
-    |> Remoting.buildHttpHandler
 
 let app = application {
     url ("http://0.0.0.0:" + port.ToString() + "/")

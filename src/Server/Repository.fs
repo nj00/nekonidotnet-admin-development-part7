@@ -4,60 +4,63 @@ open System.Data.SQLite
 open DataAccess
 open Shared
 open Shared.BlogModels
+open Dapper
+
+module SqliteTypeHandler =
+    open Dapper
+    type TaxonomyTypeEnumHandler () =
+        inherit SqlMapper.TypeHandler<TaxonomyTypeEnum> ()
+
+        override __.SetValue (param, value) =
+            param.Value <- value
+
+        override __.Parse value =
+            enum<TaxonomyTypeEnum> (value :?> int)
+
+    let addTypeHandlers () =
+        SqlMapper.AddTypeHandler(TaxonomyTypeEnumHandler())
 
 let getConnection (connectionString:string) = 
     new SQLiteConnection(connectionString)
 
 
-type IdParam = { 
-    Id : int;
-}
-
-type CountResult = {
-    cnt: int64;
-}
-
 let getTaxonomies (connectionString:string) (taxonomyType:TaxonomyTypeEnum option) (page:PagerModel)  =
     let connection = getConnection connectionString
-
-    let sqlFrom = 
-        """
-        from [Taxonomy]
-        """
-    let sqlCount = 
-        """
-        select count(1) as [cnt]
-        """
-        + sqlFrom
-
-    let sqlList = 
-        """
-        select *
-        """
-        + sqlFrom
 
     let sqlWhere = 
         match taxonomyType with
         | None -> ""
         | Some x -> sprintf "where [Type] = %d" (int x)
 
-    let sqlOrder = "order by [Id] "
-    let sqlLimitAndOffset = sprintf "limit %d offset %d" page.rowsPerPage ((page.currentPage - 1L) * page.rowsPerPage)
-
-    let makePagenation x = {page with allRowsCount = x}
-    let countResult =
+    let getCount criteria =
+        let sql = 
+            """
+            select count(1) as [cnt]
+            from [Taxonomy]
+            """
         connection 
-        |> query<CountResult> (sqlCount + sqlWhere) |> Seq.head
-    let pageResult = makePagenation countResult.cnt
+        |> query<int64> (sql + criteria) |> Seq.head
 
-    let listResult =    
+
+    let getList criteria =    
+        let sql = 
+            """
+            select *
+            from [Taxonomy]
+            """
+        let sqlOrder = "order by [Id] "
+        let sqlLimitAndOffset = sprintf "limit %d offset %d" page.rowsPerPage ((page.currentPage - 1L) * page.rowsPerPage)
         connection 
-        |> query<Taxonomy> (sqlList + sqlWhere + sqlOrder + sqlLimitAndOffset)
+        |> query<Taxonomy> (sql + criteria + sqlOrder + sqlLimitAndOffset)
 
-    { data = listResult
-      pagenation = pageResult }
+    { data = getList sqlWhere
+      pagenation = {page with allRowsCount = getCount sqlWhere} }
 
-let getTaxonomy (connectionString:string) (id:int) =
+
+type IdParam = { 
+    Id : int64;
+}
+let getTaxonomy (connectionString:string) (id:int64) =
     let connection = getConnection connectionString
 
     let sql =
@@ -88,14 +91,10 @@ let addNewTaxonomy (connectionString:string) (record:Taxonomy) =
          ,@Name 
          ,@UrlSlug 
          ,@Description
-        );
-        select [Id] from [Taxonomy] where ROWID = last_insert_rowid()
+        )
         """
-    // connection |> execute sql record
     connection 
-    |> parametrizedQuery<IdParam> sql record
-    |> Seq.head
-    |> (fun x -> x.Id)
+    |> execute sql record
 
 let updateTaxonomy (connectionString:string) (record:Taxonomy) =
     let connection = getConnection connectionString
@@ -110,7 +109,8 @@ let updateTaxonomy (connectionString:string) (record:Taxonomy) =
          ,[Description] = @Description
         where [Id] = @Id
         """
-    connection |> execute sql record
+    connection 
+    |> execute sql record
 
 let removeTaxonomy (connectionString:string) (record:Taxonomy) =
     let connection = getConnection connectionString
@@ -120,4 +120,5 @@ let removeTaxonomy (connectionString:string) (record:Taxonomy) =
         delete from [Taxonomy]
         where [Id] = @Id
         """
-    connection |> execute sql record        
+    connection 
+    |> execute sql record        
