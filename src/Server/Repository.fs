@@ -48,7 +48,7 @@ let getTaxonomies (connectionString:string) (taxonomyType:TaxonomyTypeEnum optio
             select *
             from [Taxonomy]
             """
-        let sqlOrder = "order by [Id] "
+        let sqlOrder = " order by [Id] "
         let sqlLimitAndOffset = sprintf "limit %d offset %d" page.rowsPerPage ((page.currentPage - 1L) * page.rowsPerPage)
         connection 
         |> query<Taxonomy> (sql + criteria + sqlOrder + sqlLimitAndOffset)
