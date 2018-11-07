@@ -2,7 +2,6 @@ group Server
     storage: none
     source https://api.nuget.org/v3/index.json
 
-nuget Dapper
     nuget FSharp.Core
     nuget Saturn
     nuget Fable.Remoting.Giraffe
