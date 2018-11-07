@@ -28,23 +28,23 @@ let pager (model:PagerModel) pageAction dispatch =
       | 1 -> Pagination.ellipsis []
       | _ -> ofOption None
 
-  // let pageList = 
-  //   if lastPage <= itemCount then
-  //     [1L..lastPage] //TODO: このブロックに来るとブラウザが固まる
-  //       |> List.map pageLink
-  //   else
-  //     let leftLinks = 
-  //       if model.currentPage = firstPage then []
-  //       elif model.currentPage = firstPage + 1L then [pageLink firstPage]
-  //       elif model.currentPage  = firstPage + 2L then [pageLink firstPage; pageLink (model.currentPage - 1L)]
-  //       else [pageLink firstPage; pageEllipsis firstPage (model.currentPage - 2L) (firstPage + 1L); pageLink (model.currentPage - 1L)]
-  //     let rightLinks = 
-  //       if model.currentPage = lastPage then []
-  //       elif model.currentPage = lastPage - 1L then [pageLink lastPage]
-  //       elif model.currentPage = lastPage - 2L then [pageLink (model.currentPage + 1L); pageLink lastPage]
-  //       else [pageLink (model.currentPage + 1L); pageEllipsis (model.currentPage + 2L) lastPage (lastPage - 1L); pageLink lastPage]
-  //     let currentPageLink = [pageLink model.currentPage]
-  //     List.concat [leftLinks; currentPageLink; rightLinks]
+  let pageList = 
+    if lastPage <= itemCount then
+      [1L..lastPage]
+        |> List.map pageLink
+    else
+      let leftLinks = 
+        if model.currentPage = firstPage then []
+        elif model.currentPage = firstPage + 1L then [pageLink firstPage]
+        elif model.currentPage  = firstPage + 2L then [pageLink firstPage; pageLink (model.currentPage - 1L)]
+        else [pageLink firstPage; pageEllipsis firstPage (model.currentPage - 2L) (firstPage + 1L); pageLink (model.currentPage - 1L)]
+      let rightLinks = 
+        if model.currentPage = lastPage then []
+        elif model.currentPage = lastPage - 1L then [pageLink lastPage]
+        elif model.currentPage = lastPage - 2L then [pageLink (model.currentPage + 1L); pageLink lastPage]
+        else [pageLink (model.currentPage + 1L); pageEllipsis (model.currentPage + 2L) lastPage (lastPage - 1L); pageLink lastPage]
+      let currentPageLink = [pageLink model.currentPage]
+      List.concat [leftLinks; currentPageLink; rightLinks]
 
   if lastPage = 1L then
     ofOption None
@@ -60,7 +60,6 @@ let pager (model:PagerModel) pageAction dispatch =
               Disabled (model.currentPage = lastPage);
               OnClick (fun _ -> pageAction { model with currentPage = model.currentPage + 1L} |> dispatch) ] ]
           [ str "次ページ" ]
-        //TODO: とりあえず前ページ／次ページだけにする。
-        // Pagination.list [ ] pageList 
+        Pagination.list [ ] pageList 
       ]
 
