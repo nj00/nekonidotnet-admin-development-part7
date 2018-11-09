@@ -12,7 +12,7 @@ module Route =
 type ICounterApi =
     { initialCounter : unit -> Async<Counter> }
 
-
+/// ListPagerのModel
 type PagerModel = {
   rowsPerPage : int64;
   currentPage : int64;

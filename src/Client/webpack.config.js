@@ -98,7 +98,14 @@ module.exports = {
                     loader: 'babel-loader',
                     options: CONFIG.babel
                 },
-            }
+            },
+            {
+                test: /\.(sa|c)ss$/,
+                use: [
+                    "style-loader",
+                    "css-loader"
+                ]
+            }            
         ]
     }
 };

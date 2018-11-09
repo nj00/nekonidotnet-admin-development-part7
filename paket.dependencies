@@ -12,6 +12,7 @@ group Client
     storage: none
     source https://api.nuget.org/v3/index.json
 
+    nuget Elmish.Toastr
     nuget Fable.Core ~> 2
     nuget Fable.Elmish ~> 2
     nuget Fable.Elmish.Browser ~> 2

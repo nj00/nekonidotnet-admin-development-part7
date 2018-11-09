@@ -30,7 +30,7 @@ let getTaxonomies (connectionString:string) (taxonomyType:TaxonomyTypeEnum optio
     let sqlWhere = 
         match taxonomyType with
         | None -> ""
-        | Some x -> sprintf "where [Type] = %d" (int x)
+        | Some x -> sprintf "where [Type] = %d " (int x)
 
     let getCount criteria =
         let sql = 
@@ -40,7 +40,8 @@ let getTaxonomies (connectionString:string) (taxonomyType:TaxonomyTypeEnum optio
             """
         connection 
         |> query<int64> (sql + criteria) |> Seq.head
-
+    let newPager = {page with allRowsCount = getCount sqlWhere }
+    let newCurrent = min newPager.currentPage newPager.LastPage
 
     let getList criteria =    
         let sql = 
@@ -48,13 +49,13 @@ let getTaxonomies (connectionString:string) (taxonomyType:TaxonomyTypeEnum optio
             select *
             from [Taxonomy]
             """
-        let sqlOrder = " order by [Id] "
-        let sqlLimitAndOffset = sprintf "limit %d offset %d" page.rowsPerPage ((page.currentPage - 1L) * page.rowsPerPage)
+        let sqlOrder = "order by [Id] "
+        let sqlLimitAndOffset = sprintf "limit %d offset %d" page.rowsPerPage ((newCurrent - 1L) * page.rowsPerPage)
         connection 
         |> query<Taxonomy> (sql + criteria + sqlOrder + sqlLimitAndOffset)
 
     { data = getList sqlWhere
-      pagenation = {page with allRowsCount = getCount sqlWhere} }
+      pagenation = {newPager with currentPage = newCurrent} }
 
 
 type IdParam = { 

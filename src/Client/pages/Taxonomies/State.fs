@@ -6,6 +6,7 @@ open Types
 open Shared
 open Shared.BlogModels
 
+open App.Notification
 
 let getApi : ITaxonomyApi =
     Remoting.createApi()
@@ -59,6 +60,11 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
                 api.updateTaxonomy
         Cmd.ofAsync serverApi taxonomy (Ok >> Saved) ApiError
 
+    // 保存後のコマンド
+    let savedCmd (note:Note) =
+        Cmd.batch [
+            Cmd.ofMsg (Notify (MsgType.Success note))
+            Cmd.ofMsg Reload]    
 
     match msg with
     // 一覧再読み込み
@@ -74,7 +80,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
     | PageChanged newPage ->
         {model with listCriteria = { model.listCriteria with page = newPage} }, Cmd.ofMsg Reload
 
-    // 一覧読み込み
+    // 一覧読み込み後
     | Loaded (Ok x) -> 
         { model with dataList = Some x.data; listCriteria = {model.listCriteria with page = x.pagenation } }, 
         Cmd.none
@@ -102,6 +108,16 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
     // 保存
     | Save x ->
         { model with currentRec = Some x}, updateOrInsert x
+    | Saved (Ok _)->
+        let newCurrent = 
+            if model.currentRec.Value.Id = -1L then
+                // 新規の場合、末尾に持っていく。サーバー側でcurrentPageが調整される
+                System.Int64.MaxValue
+            else
+                model.listCriteria.page.currentPage
+        let newPager = {model.listCriteria.page with currentPage = newCurrent}
+        let newCriteria = {model.listCriteria with page = newPager } 
+        { model with listCriteria = newCriteria }, savedCmd { title=""; message="保存しました。" }
 
     // 削除
     | Remove x ->
@@ -111,14 +127,11 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
             x
             (Ok >> Removed)
             ApiError
+    | Removed (Ok _)->
+        model, savedCmd { title=""; message="削除しました。" }
 
-    // 更新／削除後は一覧データ取得
-    | Saved (Ok _)| Removed (Ok _)->
-        let newCriteria = {model.listCriteria with page = initPagenation } 
-        { model with listCriteria = newCriteria }, Cmd.ofMsg Reload
-
-    // Apiエラーはそのまま伝搬
-    | ApiError e ->
+    // Apiエラーと通知はそのまま伝搬
+    | ApiError _ | Notify _ ->
         model, Cmd.ofMsg msg
 
     | _ -> model, Cmd.none

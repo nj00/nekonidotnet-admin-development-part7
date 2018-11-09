@@ -2,14 +2,19 @@ module App.State
 
 open Elmish
 open Elmish.Browser.Navigation
+open Elmish.Toastr
 open Fable.Core.JsInterop
 open Fable.Import
+open Fable.Import.Browser
 open Fable.PowerPack.Fetch
 open Fable.Remoting.Client
-open App.Types
 open Pages
 open Shared
+
+
 open App
+open App.Types
+open App.Notification
 
 let urlUpdate (result: Page option) (model: App.Types.Model) =
     match result with
@@ -39,6 +44,42 @@ let init result =
 
 let update msg model =
     match msg, model.PageModel with
+    // 通知メッセージ
+    | NotificationMsg msg, _ ->
+        let errorToast note = 
+            Toastr.message note.message
+            |> Toastr.timeout 0
+            |> Toastr.extendedTimout 0
+            |> Toastr.error
+        let warningToast note = 
+            Toastr.message note.message
+            |> Toastr.title note.title
+            |> Toastr.timeout 0
+            |> Toastr.extendedTimout 0
+            |> Toastr.warning
+        let successToast note = 
+            Toastr.message note.message
+            |> Toastr.title note.title
+            |> Toastr.success
+        match msg with
+        | MsgType.Error note ->
+            model, errorToast note
+        | MsgType.Warning note ->
+            model, warningToast note
+        | MsgType.Success note ->
+            model, successToast note
+    // 例外メッセージ
+    | ErrorMsg exn, _ ->
+        let notify (exn:exn) = 
+            Cmd.ofMsg (NotificationMsg (Error { Note.title = ""; message = exn.Message }))
+        match exn with
+        | :? ProxyRequestException as ex -> 
+            match ex.StatusCode with
+            | _ -> 
+                { model with Note = ex.Message } , notify exn
+        | _ ->
+            { model with Note = exn.Message } , notify exn
+
     | HomeMsg msg, HomeModel m ->
         let (model', cmd) = Home.State.update msg m
         { model with PageModel = HomeModel model' }, Cmd.map HomeMsg cmd
@@ -60,13 +101,9 @@ let update msg model =
     | TaxonomiesMsg msg, TaxonomiesModel m ->
         match msg with
         | Taxonomies.Types.Msg.ApiError exn -> 
-            match exn with
-            | :? ProxyRequestException as ex -> 
-                match ex.StatusCode with
-                | _ -> 
-                    { model with Note = ex.Message } , Cmd.none
-            | _ ->
-                { model with Note = exn.Message } , Cmd.none
+            model, Cmd.ofMsg (ErrorMsg exn)
+        | Taxonomies.Types.Msg.Notify note -> 
+            model, Cmd.ofMsg (NotificationMsg note)
         | _ ->
             let (model', cmd) = Taxonomies.State.update msg m
             { model with PageModel = TaxonomiesModel model' }, Cmd.map TaxonomiesMsg cmd

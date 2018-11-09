@@ -1,5 +1,6 @@
 module Taxonomies.Types
 
+open App.Notification
 open Shared
 
 type TaxonomyType =
@@ -33,4 +34,5 @@ type Msg =
   | Remove of BlogModels.Taxonomy
   | Removed of Result<int, exn>
   | ApiError of exn
+  | Notify of MsgType
  

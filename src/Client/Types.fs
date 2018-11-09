@@ -1,12 +1,15 @@
 module App.Types
 open Shared
 open Pages
+open App.Notification
 
 type Msg =
   | HomeMsg of Home.Types.Msg
   | CounterMsg of Counter.Types.Msg
   | JankenMsg of Janken.Types.Msg
   | TaxonomiesMsg of Taxonomies.Types.Msg
+  | ErrorMsg of exn
+  | NotificationMsg of Notification.MsgType
 
 type PageModel =
   | HomeModel of Home.Types.Model
