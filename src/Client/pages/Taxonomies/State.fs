@@ -51,10 +51,13 @@ let init () : Model * Cmd<Msg> =
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
     let api = getApi
 
+    let isNewRec (taxonomy:Taxonomy) =
+        taxonomy.Id < 0L
+
     // idが負の値は追加、それ以外は更新を行う
     let updateOrInsert (taxonomy:Taxonomy) : Cmd<Msg> =
         let serverApi = 
-            if taxonomy.Id < 0L then
+            if isNewRec taxonomy then
                 api.addNewTaxonomy
             else
                 api.updateTaxonomy
@@ -62,6 +65,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
     // 保存後のコマンド
     let savedCmd (note:Note) =
+        // 通知と再表示
         Cmd.batch [
             Cmd.ofMsg (Notify (MsgType.Success note))
             Cmd.ofMsg Reload]    
@@ -110,7 +114,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
         { model with currentRec = Some x}, updateOrInsert x
     | Saved (Ok _)->
         let newCurrent = 
-            if model.currentRec.Value.Id = -1L then
+            if isNewRec model.currentRec.Value then
                 // 新規の場合、末尾に持っていく。サーバー側でcurrentPageが調整される
                 System.Int64.MaxValue
             else
