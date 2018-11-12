@@ -18,7 +18,7 @@ let deployDir = Path.getFullName "./deploy"
 
 let platformTool tool winTool =
     let tool = if Environment.isUnix then tool else winTool
-    match Process.tryFindFileOnPath tool with
+    match ProcessUtils.tryFindFileOnPath tool with
     | Some t -> t
     | _ ->
         let errorMsg =
@@ -31,14 +31,13 @@ let nodeTool = platformTool "node" "node.exe"
 let yarnTool = platformTool "yarn" "yarn.cmd"
 
 let runTool cmd args workingDir =
-    let result =
-        Process.execSimple (fun info ->
-            { info with
-                FileName = cmd
-                WorkingDirectory = workingDir
-                Arguments = args })
-            TimeSpan.MaxValue
-    if result <> 0 then failwithf "'%s %s' failed" cmd args
+    let arguments = args |> String.split ' ' |> Arguments.OfArgs
+    Command.RawCommand (cmd, arguments)
+    |> CreateProcess.fromCommand
+    |> CreateProcess.withWorkingDirectory workingDir
+    |> CreateProcess.ensureExitCode
+    |> Proc.run
+    |> ignore
 
 let runDotNet cmd workingDir =
     let result =
@@ -46,14 +45,12 @@ let runDotNet cmd workingDir =
     if result.ExitCode <> 0 then failwithf "'dotnet %s' failed in %s" cmd workingDir
 
 let openBrowser url =
-    let result =
-        //https://github.com/dotnet/corefx/issues/10361
-        Process.execSimple (fun info ->
-            { info with
-                FileName = url
-                UseShellExecute = true })
-            TimeSpan.MaxValue
-    if result <> 0 then failwithf "opening browser failed"
+    //https://github.com/dotnet/corefx/issues/10361
+    Command.ShellCommand url
+    |> CreateProcess.fromCommand
+    |> CreateProcess.ensureExitCodeWithMessage "opening browser failed"
+    |> Proc.run
+    |> ignore
 
 Target.create "Clean" (fun _ ->
     Shell.cleanDirs [deployDir]
@@ -132,4 +129,4 @@ open Fake.Core.TargetOperators
     ==> "RestoreServer"
     ==> "Run"
 
-Target.runOrDefault "Build"
+Target.runOrDefaultWithArguments "Build"
