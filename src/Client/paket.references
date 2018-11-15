@@ -9,4 +9,4 @@ Fable.Core
 dotnet-fable
 Fulma
 Fable.Remoting.Client
-Elmish.Toastr
+Thoth.Elmish.Toast

@@ -3,16 +3,19 @@ module Client
 open Elmish
 open Elmish.Browser.Navigation
 open Elmish.React
+open Thoth.Elmish
 open App.View
 open App.State
 
 #if DEBUG
 open Elmish.Debug
 open Elmish.HMR
+open Thoth.Elmish.Toast
 #endif
 
 Program.mkProgram init update view
 |> Program.toNavigable Pages.urlParser urlUpdate
+|> Toast.Program.withToast ViewHelper.renderToastWithFulma
 #if DEBUG
 |> Program.withConsoleTrace
 |> Program.withHMR
