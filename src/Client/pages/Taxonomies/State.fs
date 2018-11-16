@@ -7,13 +7,12 @@ open Shared
 open Shared.BlogModels
 
 open App.Notification
+let initPagenation = { rowsPerPage = 5L; currentPage = 1L; allRowsCount = -1L;}
 
 let getApi : ITaxonomyApi =
     Remoting.createApi()
     |> Remoting.withRouteBuilder Route.builder
     |> Remoting.buildProxy<ITaxonomyApi>
-
-let initPagenation = { rowsPerPage = 5L; currentPage = 1L; allRowsCount = -1L;}
 
 /// <summary>
 /// 一覧取得
@@ -55,7 +54,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
         taxonomy.Id < 0L
 
     // idが負の値は追加、それ以外は更新を行う
-    let updateOrInsert (taxonomy:Taxonomy) : Cmd<Msg> =
+    let insertOrUpdate (taxonomy:Taxonomy) : Cmd<Msg> =
         let serverApi = 
             if isNewRec taxonomy then
                 api.addNewTaxonomy
@@ -111,7 +110,7 @@ let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
 
     // 保存
     | Save x ->
-        { model with currentRec = Some x}, updateOrInsert x
+        { model with currentRec = Some x}, insertOrUpdate x
     | Saved (Ok _)->
         let newCurrent = 
             if isNewRec model.currentRec.Value then
