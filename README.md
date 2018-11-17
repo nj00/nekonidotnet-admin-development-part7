@@ -1,6 +1,5 @@
-# F#でブログ管理用Webアプリ開発 - Part.6
+# F#でブログ管理用Webアプリ開発 - Part.7
 
 詳しくは以下の記事をご覧ください。
 
-https://www.nekoni.net/Blog/Article/nekonidotnet-admin-development-part6-first-part
-https://www.nekoni.net/Blog/Article/nekonidotnet-admin-development-part6-latter-part
+https://www.nekoni.net/Blog/Article/nekonidotnet-admin-development-part7
