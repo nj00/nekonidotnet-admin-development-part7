@@ -30,7 +30,7 @@ type Model = {
 type Msg =
     | LoginModelChanged of Login
     | ClickLogin
-    | ChallengeLogin of Result<UserData, exn>
+    | LoginResult of Result<UserData, exn>
 
 let api : IAuthApi =
   Remoting.createApi()
@@ -58,12 +58,12 @@ let update (msg:Msg) model : Model*Cmd<Msg> =
             Cmd.ofAsync
                 api.login
                 model.Login
-                (Ok >> ChallengeLogin)
-                (Error >> ChallengeLogin)
+                (Ok >> LoginResult)
+                (Error >> LoginResult)
         model, cmd
-    | ChallengeLogin (Ok user) ->
+    | LoginResult (Ok user) ->
         { model with State = LoggedIn user; Login = { model.Login with Password = "" } }, Cmd.none
-    | ChallengeLogin (Error exn) ->
+    | LoginResult (Error exn) ->
         match exn with
         | :? ProxyRequestException as ex -> 
             printfn "%s" ex.ResponseText

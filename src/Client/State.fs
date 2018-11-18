@@ -146,6 +146,18 @@ let update msg model =
         let (login, _) = LoginForm.init None
         { model with LoginModel = login; UserData = None }, Cmd.none
 
+    // APIエラー
+    | ApiError exn, _ ->    
+        match exn with
+        | :? ProxyRequestException as ex -> 
+            match ex.StatusCode with
+            | 401 ->    //Unauthorized
+                Browser.console.log("Unauthorized");
+                model, Cmd.ofMsg Logout
+            | _ -> 
+                model, Cmd.ofMsg (ErrorMsg exn)
+        | _ ->
+            model, Cmd.ofMsg (ErrorMsg exn)
 
     // Homeページ
     | HomeMsg msg, HomeModel m ->
@@ -172,7 +184,7 @@ let update msg model =
     | TaxonomiesMsg msg, TaxonomiesModel m ->
         match msg with
         | Taxonomies.Types.Msg.ApiError exn -> 
-            model, Cmd.ofMsg (ErrorMsg exn)
+            model, Cmd.ofMsg (ApiError exn)
         | Taxonomies.Types.Msg.Notify notifyMsg -> 
             model, Cmd.ofMsg (NotificationMsg notifyMsg)
         | _ ->

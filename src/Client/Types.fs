@@ -11,6 +11,7 @@ type Msg =
   | StorageFailure of exn
   | ErrorMsg of exn
   | NotificationMsg of Notification.MsgType
+  | ApiError of exn
   | HomeMsg of Home.Types.Msg
   | CounterMsg of Counter.Types.Msg
   | JankenMsg of Janken.Types.Msg
