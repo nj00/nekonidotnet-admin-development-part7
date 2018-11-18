@@ -14,12 +14,18 @@ var CONFIG = {
             resolve("./Client.fsproj")
         ]
     },
-    devServerProxy: {
-        '/api/*': {
-            target: 'http://localhost:' + (process.env.SUAVE_FABLE_PORT || "8085"),
-            changeOrigin: true
-        }
-    },
+    // ルートの追加
+    // devServerProxy: {
+    //     '/api/*': {
+    //         target: 'http://localhost:' + (process.env.SUAVE_FABLE_PORT || "8085"),
+    //         changeOrigin: true
+    //     }
+    // },
+    devServerProxy: [{
+        context: ['/public', '/api'],
+        target: 'http://localhost:' + (process.env.SUAVE_FABLE_PORT || "8085"),
+        changeOrigin: true
+    }],
     historyApiFallback: {
         index: resolve("./index.html")
     },

@@ -4,12 +4,17 @@ open Pages
 open App.Notification
 
 type Msg =
+  | LoggedIn of Auth.UserData
+  | LoggedOut
+  | Logout
+  | LoginMsg of LoginForm.Msg
+  | StorageFailure of exn
+  | ErrorMsg of exn
+  | NotificationMsg of Notification.MsgType
   | HomeMsg of Home.Types.Msg
   | CounterMsg of Counter.Types.Msg
   | JankenMsg of Janken.Types.Msg
   | TaxonomiesMsg of Taxonomies.Types.Msg
-  | ErrorMsg of exn
-  | NotificationMsg of Notification.MsgType
 
 type PageModel =
   | HomeModel of Home.Types.Model
@@ -19,6 +24,8 @@ type PageModel =
 
 type Model = {
     Note: string
+    LoginModel: LoginForm.Model
+    UserData: Auth.UserData option
     PageModel: PageModel
   }
   with 

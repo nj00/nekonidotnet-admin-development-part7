@@ -48,6 +48,6 @@ let apiRoute:(HttpFunc -> HttpContext -> HttpFuncResult) =
         }
 
     Remoting.createApi()
-    |> Remoting.withRouteBuilder Route.builder
+    |> Remoting.withRouteBuilder Route.apiRouteBuilder
     |> Remoting.fromContext (fun ctx -> getApi ctx)
     |> Remoting.buildHttpHandler

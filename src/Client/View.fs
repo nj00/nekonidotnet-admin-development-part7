@@ -11,7 +11,7 @@ open Shared
 open Types
 open Pages
 
-let navBrand =
+let navBrand userName dispatch =
     Navbar.navbar [ Navbar.Color IsWhite ]
         [ Container.container [ ]
             [ Navbar.Brand.div [ ]
@@ -21,6 +21,16 @@ let navBrand =
                       [ span [ ] [ ]
                         span [ ] [ ]
                         span [ ] [ ] ] ]
+              Navbar.End.div [ ]
+                [ Navbar.Item.div [ ]
+                    [ str userName ]  
+                  Navbar.Item.div [ ]
+                    [ Button.button 
+                        [ Button.Color IsSuccess
+                          Button.OnClick (fun _ -> Logout |> dispatch )
+                        ]
+                        [ str "Logout" ] ] 
+                ] 
             ]
         ] 
 
@@ -57,8 +67,13 @@ let view (model : Model) (dispatch : Msg -> unit) =
         | JankenModel m -> Janken.View.root m (JankenMsg >> dispatch)
         | TaxonomiesModel m -> Taxonomies.View.root m (TaxonomiesMsg >> dispatch)        
 
+    let userName = 
+        match model.LoginModel.State with
+        | LoginForm.LoggedIn user -> sprintf "UserName: %s" user.UserName
+        | LoginForm.LoggedOut -> ""
+
     div [ ]
-        [ navBrand
+        [ navBrand userName dispatch
           Container.container [ ]
               [ Columns.columns [ ]
                   [ Column.column [ Column.Width (Screen.All, Column.Is3) ]
@@ -69,4 +84,5 @@ let view (model : Model) (dispatch : Msg -> unit) =
                       ] 
                   ] 
               ] 
+          LoginForm.view model.LoginModel (LoginMsg >> dispatch)
         ]

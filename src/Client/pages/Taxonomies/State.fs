@@ -9,15 +9,17 @@ open Shared.BlogModels
 open App.Notification
 let initPagenation = { rowsPerPage = 5L; currentPage = 1L; allRowsCount = -1L;}
 
-let getApi : ITaxonomyApi =
+let getApi jwt : ITaxonomyApi =
+    let header = sprintf "Bearer %s" jwt
     Remoting.createApi()
-    |> Remoting.withRouteBuilder Route.builder
+    |> Remoting.withRouteBuilder Route.apiRouteBuilder
+    |> Remoting.withAuthorizationHeader header
     |> Remoting.buildProxy<ITaxonomyApi>
 
 /// <summary>
 /// 一覧取得
 /// </summary>
-let getList (criteria:ListCriteria) =
+let getList jwt (criteria:ListCriteria) =
     let param = { taxonomyType =
                     match criteria.taxonomyType with
                     | Category -> Some TaxonomyTypeEnum.Category
@@ -27,7 +29,7 @@ let getList (criteria:ListCriteria) =
                   pagenation = criteria.page }
 
     Cmd.ofAsync
-        getApi.getTaxonomies
+        (getApi jwt).getTaxonomies
         param
         (Ok >> Loaded)
         ApiError
@@ -35,21 +37,24 @@ let getList (criteria:ListCriteria) =
 /// <summary>
 /// Init関数
 /// <summary>
-let init () : Model * Cmd<Msg> =
+let init jwt : Model * Cmd<Msg> =
     let model = {
+        jwt = jwt
         listCriteria = { taxonomyType = All; page = initPagenation}
         dataList = None
         currentRec = None
     }
-    let cmd = getList model.listCriteria
+    let cmd = getList model.jwt model.listCriteria
     model, cmd
 
 /// <summary>
 /// Update関数
 /// </summary>
 let update (msg : Msg) (model : Model) : Model * Cmd<Msg> =
-    let api = getApi
-
+    let jwt = model.jwt
+    let api = getApi jwt
+    let getList = getList jwt
+    
     let isNewRec (taxonomy:Taxonomy) =
         taxonomy.Id < 0L
 

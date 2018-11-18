@@ -7,8 +7,10 @@
     <Compile Include="DataAccess.fs" />
     <Compile Include="../Shared/BlogModels.fs" />
     <Compile Include="../Shared/Shared.fs" />
+    <Compile Include="ApiCommon.fs" />
     <Compile Include="Repository.fs" />
     <Compile Include="DbInit.fs" />
+    <Compile Include="Services/Auth.fs" />
     <Compile Include="Services/Counter.fs" />
     <Compile Include="Services/Taxonomies.fs" />
     <Compile Include="Server.fs" />

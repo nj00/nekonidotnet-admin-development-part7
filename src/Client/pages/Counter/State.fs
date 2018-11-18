@@ -7,7 +7,7 @@ open Shared
 
 let api : ICounterApi =
   Remoting.createApi()
-  |> Remoting.withRouteBuilder Route.builder
+  |> Remoting.withRouteBuilder Route.publicRouteBuilder
   |> Remoting.buildProxy<ICounterApi>
 
 let init () : Model * Cmd<Msg> =

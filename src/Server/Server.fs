@@ -19,14 +19,33 @@ Repository.SqliteTypeHandler.addTypeHandlers()
 let publicPath = Path.GetFullPath "../Client/public"
 let port = 8085us
 
-let webApp = router {
-    forward "/api/ICounterApi" Services.Counter.apiRoute
-    forward "/api/ITaxonomyApi" Services.Taxonomies.apiRoute
+// WebApiルート(jwtによるセキュアなルート)
+let apiRouter = router {
+    not_found_handler (text "404")
+    pipe_through (Auth.requireAuthentication ChallengeType.JWT)
+    forward "/ITaxonomyApi" Services.Taxonomies.apiRoute
+}
+
+// フリーWebApiルート
+let publicRouter = router {
+    not_found_handler (text "404")
+    forward "/IAuthApi" Services.Auth.apiRoute
+    forward "/ICounterApi" Services.Counter.apiRoute
+}
+
+
+// Topルーター
+let topRouter = router {
+    not_found_handler (text "404")
+    forward "/public" publicRouter
+    forward "/api" apiRouter
 }
 
 let app = application {
+    use_jwt_authentication Services.Auth.secretKey Services.Auth.issuer
+
     url ("http://0.0.0.0:" + port.ToString() + "/")
-    use_router webApp
+    use_router topRouter
     memory_cache
     use_static publicPath
     use_gzip

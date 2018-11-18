@@ -16,6 +16,6 @@ let apiRoute:(HttpFunc -> HttpContext -> HttpFuncResult)  =
         initialCounter = getInitCounter >> Async.AwaitTask
     }
     Remoting.createApi()
-    |> Remoting.withRouteBuilder Route.builder
+    |> Remoting.withRouteBuilder Route.publicRouteBuilder
     |> Remoting.fromValue api
     |> Remoting.buildHttpHandler

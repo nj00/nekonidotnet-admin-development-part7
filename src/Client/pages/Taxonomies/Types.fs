@@ -15,6 +15,7 @@ type ListCriteria = {
 }
 
 type Model = {
+  jwt: string
   listCriteria: ListCriteria
   dataList: seq<BlogModels.Taxonomy> option
   currentRec: BlogModels.Taxonomy option

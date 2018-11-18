@@ -32,15 +32,37 @@ let urlUpdate (result: Page option) (model: App.Types.Model) =
         let m, cmd = Janken.State.init()
         { model with PageModel = JankenModel m }, Cmd.map JankenMsg cmd
     | Some Page.Taxonomies ->
-        let m, cmd = Taxonomies.State.init()
+        let jwt = 
+            match model.UserData with 
+            | Some user -> user.Token
+            | None -> ""
+        let m, cmd = Taxonomies.State.init jwt
         { model with PageModel = TaxonomiesModel m }, Cmd.map TaxonomiesMsg cmd
 
+let saveUserCmd user =
+    Cmd.ofFunc 
+        UserStorage.save 
+        user 
+        (fun _ -> LoggedIn user) 
+        StorageFailure
+
+let removeUserCmd () =
+    Cmd.ofFunc 
+        UserStorage.remove 
+        ()
+        (fun _ -> LoggedOut) 
+        StorageFailure
+
 let init result =
+    let user = UserStorage.load()
+    let (login, _) = LoginForm.init user
     let (home, _) = Home.State.init()
     let (model, cmd) =
       urlUpdate result
         { Note = ""
-          PageModel = HomeModel home   }
+          LoginModel = login
+          UserData = user
+          PageModel = HomeModel home }
     model, cmd
 
 let update msg model =
@@ -50,12 +72,14 @@ let update msg model =
         let errorToast note = 
             Toast.message note.message
             |> Toast.position Toast.TopRight
+            |> Toast.withCloseButton
             |> Toast.noTimeout
             |> Toast.icon Fa.I.TimesCircle
             |> Toast.error
         let warningToast note = 
             Toast.message note.message
             |> Toast.position Toast.TopRight
+            |> Toast.withCloseButton
             |> Toast.title note.title
             |> Toast.noTimeout
             |> Toast.icon Fa.I.ExclamationTriangle
@@ -63,12 +87,14 @@ let update msg model =
         let successToast note = 
             Toast.message note.message
             |> Toast.position Toast.TopRight
+            |> Toast.withCloseButton
             |> Toast.title note.title
             |> Toast.icon Fa.I.CheckCircle
             |> Toast.success
         let infoToast note = 
             Toast.message note.message
             |> Toast.position Toast.TopRight
+            |> Toast.withCloseButton
             |> Toast.title note.title
             |> Toast.icon Fa.I.InfoCircle
             |> Toast.info
@@ -93,24 +119,56 @@ let update msg model =
         | _ ->
             { model with Note = exn.Message } , notify exn
 
+    // ブラウザストレージアクセスエラー
+    | StorageFailure e, _ ->
+        printfn "Unable to access local storage: %A" e
+        model, Cmd.ofMsg (ErrorMsg e)
+
+    // ログイン
+    | LoginMsg msg, _ ->
+        let (loginModel, cmd) = LoginForm.update msg model.LoginModel
+        match loginModel.State with
+        | LoginForm.LoggedOut ->
+            { model with LoginModel = loginModel }, Cmd.map LoginMsg cmd
+        | LoginForm.LoggedIn user ->
+            { model with LoginModel = loginModel }, saveUserCmd user
+    | LoggedIn newUser, _ ->
+        let page = 
+            match model.PageModel with
+            | TaxonomiesModel m -> TaxonomiesModel {m with jwt = newUser.Token}
+            | _ -> model.PageModel
+        { model with UserData = Some newUser; PageModel = page }, Cmd.none
+
+    // ログアウト
+    | Logout, _ ->
+        model, removeUserCmd()
+    | LoggedOut, _ ->
+        let (login, _) = LoginForm.init None
+        { model with LoginModel = login; UserData = None }, Cmd.none
+
+
+    // Homeページ
     | HomeMsg msg, HomeModel m ->
         let (model', cmd) = Home.State.update msg m
         { model with PageModel = HomeModel model' }, Cmd.map HomeMsg cmd
     | HomeMsg _, _ ->
         model, Cmd.none
     
+    // Counterページ
     | CounterMsg msg, CounterModel m ->
         let (model', cmd) = Counter.State.update msg m
         { model with PageModel = CounterModel model' }, Cmd.map CounterMsg cmd
     | CounterMsg _, _ ->
         model, Cmd.none
 
+    // Jankenページ
     | JankenMsg msg, JankenModel m ->
         let (model', cmd) = Janken.State.update msg m
         { model with PageModel = JankenModel model' }, Cmd.map JankenMsg cmd
     | JankenMsg _, _ ->
         model, Cmd.none
 
+    // Taxonomiesページ
     | TaxonomiesMsg msg, TaxonomiesModel m ->
         match msg with
         | Taxonomies.Types.Msg.ApiError exn -> 
