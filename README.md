@@ -3,3 +3,4 @@
 詳しくは以下の記事をご覧ください。
 
 https://www.nekoni.net/Blog/Article/nekonidotnet-admin-development-part7
+https://www.nekoni.net/Blog/Article/nekonidotnet-admin-development-part7-extra
